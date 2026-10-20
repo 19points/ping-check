@@ -73,5 +73,5 @@ Run only one application instance per database. Back up SQLite using its backup 
 
 - `GET /api/targets` — target status and most recent latency
 - `POST /api/targets` with `{"address":"1.1.1.1"}` — add a target
-- `GET /api/targets/{id}/history?range=1h` — aggregated samples and overlapping outages for `1h` (default), `3h`, `8h`, `1d`, `2d`, or `7d`; includes window `start`/`end` (Unix seconds; null latency means a bucket contains failures)
+- `GET /api/targets/{id}/history?range=1h` — aggregated samples and overlapping outages for `1h` (default), `3h`, `8h`, `1d`, `2d`, or `7d`; includes window `start`/`end` (Unix seconds; null latency means a bucket contains failures). Alternatively pass `?start=<unix>&end=<unix>` for a custom window of up to 30 days
 - `DELETE /api/targets/{id}` — remove a target and its history
