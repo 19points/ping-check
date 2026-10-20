@@ -1,0 +1,19 @@
+services:
+  ping-test:
+    build: .
+    ports:
+      - "127.0.0.1:8088:8080"
+    volumes:
+      - ping-data:/data
+    cap_add:
+      - NET_RAW
+    restart: unless-stopped
+    environment:
+      RETENTION_DAYS: "30"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/targets', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  ping-data:
