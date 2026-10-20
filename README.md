@@ -30,6 +30,26 @@ The port binds to localhost by default. There is **no authentication**: use an a
 
 Docker networking must support the target address family. IPv6 targets require working IPv6 connectivity in the container. The image includes `iputils-ping`; Compose grants `NET_RAW` for ICMP support.
 
+## Docker images / GitHub Actions
+
+GitHub Actions runs the tests and builds the Docker image for every pull request (without publishing). Pushes to `main` and Git tags publish to **`ghcr.io/19points/ping-check`**, using the built-in `GITHUB_TOKEN`:
+
+- `latest` — latest main-branch build
+- `sha-<short SHA>` — commit-specific build
+- `<tag>` — Git tag builds
+
+The publishing workflow can also be run manually from the Actions tab. Images target Linux amd64. Builds use GitHub Actions layer caching and Docker-compatible manifests, following nginx-ipwatch's workflow pattern.
+
+After the first publish, set the package visibility to **Public** in GitHub Packages if anonymous pulls are desired. Repository/organization policies must allow Actions to write packages.
+
+To use the published image instead of building locally, replace `build: .` in `compose.yaml` with:
+
+```yaml
+image: ghcr.io/19points/ping-check:latest
+```
+
+Then run `docker compose pull && docker compose up -d`.
+
 ## Local development
 
 Requires Python 3.10+ and Linux `ping` (`iputils-ping`).
