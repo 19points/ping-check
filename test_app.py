@@ -84,6 +84,22 @@ class AppTests(unittest.TestCase):
                 self.assertEqual(len(history['outages']), 1)
         self.assertEqual(self.request(f'{path}?range=invalid')[0], 400)
 
+    def test_custom_history_window(self):
+        target = self.request('/api/targets', 'POST', {'address': '127.0.0.1'})[1]['id']
+        app.record_result(target, None, 100)
+        app.record_result(target, 2, 105)
+        app.record_result(target, 3, 120)
+        path = f'/api/targets/{target}/history'
+        status, history = self.request(f'{path}?start=90&end=110')
+        self.assertEqual(status, 200)
+        self.assertEqual((history['start'], history['end']), (90, 110))
+        self.assertEqual(len(history['samples']), 2)
+        self.assertEqual(history['outages'], [{'started': 100, 'ended': 105}])
+        self.assertEqual(self.request(f'{path}?start=90&end=110.5')[1]['end'], 110.5)
+        for bad in ['start=90', 'end=110', 'start=abc&end=110', 'start=110&end=90', 'start=110&end=110',
+                    f'start=0&end={31 * 86400}']:
+            self.assertEqual(self.request(f'{path}?{bad}')[0], 400, bad)
+
     def test_ping(self):
         with patch('app.subprocess.run') as run:
             run.return_value.returncode = 0

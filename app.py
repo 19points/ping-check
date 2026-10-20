@@ -134,14 +134,24 @@ class Handler(BaseHTTPRequestHandler):
                 target_id = int(match.group(1))
                 if not db.execute('SELECT id FROM targets WHERE id=?', (target_id,)).fetchone():
                     return self.respond(404, {'error': 'Target not found'})
-                ranges = {'1h': 3600, '3h': 10800, '8h': 28800, '1d': 86400, '2d': 172800, '7d': 604800}
-                period = parse_qs(urlsplit(self.path).query).get('range', ['1h'])[0]
-                if period not in ranges:
-                    return self.respond(400, {'error': 'Invalid range'})
-                end = time.time()
-                start = end - ranges[period]
+                query = parse_qs(urlsplit(self.path).query)
+                if 'start' in query or 'end' in query:
+                    # Custom window: explicit epoch seconds, at most 30 days wide.
+                    try:
+                        start, end = float(query['start'][0]), float(query['end'][0])
+                    except (KeyError, ValueError):
+                        return self.respond(400, {'error': 'Invalid range'})
+                    if not (end > start and end - start <= 30 * 86400):
+                        return self.respond(400, {'error': 'Invalid range'})
+                else:
+                    ranges = {'1h': 3600, '3h': 10800, '8h': 28800, '1d': 86400, '2d': 172800, '7d': 604800}
+                    period = query.get('range', ['1h'])[0]
+                    if period not in ranges:
+                        return self.respond(400, {'error': 'Invalid range'})
+                    end = time.time()
+                    start = end - ranges[period]
                 # At most 1,000 buckets; mixed success/failure buckets remain gaps.
-                width = ranges[period] / 1000
+                width = (end - start) / 1000
                 samples = db.execute('''
                     SELECT AVG(timestamp) AS timestamp,
                            CASE WHEN COUNT(latency)=COUNT(*) THEN AVG(latency) END AS latency
