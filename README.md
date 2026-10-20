@@ -1,4 +1,4 @@
-# Ping Test Utility
+# Ping Check
 
 Containerized IP uptime checker with a simple web dashboard, response-time graph, and outage history. Python standard library + SQLite; no frontend dependencies.
 
